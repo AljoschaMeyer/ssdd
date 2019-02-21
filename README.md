@@ -120,7 +120,89 @@ When decoding multiple entries with identical keys, the later entry replaces the
 
 ## Binary Encoding
 
-TODO
+The binary encoding is a compact representation of SSDD values, for machine consumption. It uses techniques similar to [cbor](https://tools.ietf.org/html/rfc7049). There is no concept of whitespace (and thus comments) in the binary encoding.
+
+Values are encoded as a single byte that tags the kind of value, followed by the actual data. The first bit of all tags is a one, so that binary and human-readable codes can immediately be recognized. This is followed by three bits indicating the kind of the value. The remaining four bits carry additional information about the following data.
+
+Some values have multiple valid encodings. Implementations are strongly encouraged to always use the shortest possible encoding, but reading an overlong code is *not* a decoding error.
+
+### Null
+
+`null` is encoded as the tag `0b1_000_0000`, followed by no additional data.
+
+### Booleans
+
+`false` is encoded as the tag `0b1_000_0001`, followed by no additional data.
+
+`true` is encoded as the tag `0b1_000_0010`, followed by no additional data.
+
+### Ints
+
+Ints are encoded as the tag `0b1_001_xxxx`, where the least significant four bits and the following bytes are determined as follows:
+
+- for least significant bits less than `0b1100`, the bits themselves represent the encoded int (in the range from zero to eleven), no more bytes follow the tag
+- for least significant bits `0b1100`, the tag is followed by a single byte, which encodes the int as two's complement (ranging from `-(2^7)` to `(2^7) - 1`)
+- for least significant bits `0b1101`, the tag is followed by two bytes in big-endian order, which encode the int as two's complement (ranging from `-(2^15)` to `(2^15) - 1`)
+- for least significant bits `0b1110`, the tag is followed by four bytes in big-endian order, which encode the int as two's complement (ranging from `-(2^31)` to `(2^31) - 1`)
+- for least significant bits `0b1111`, the tag is followed by eight bytes in big-endian order, which encode the int as two's complement (ranging from `-(2^63)` to `(2^63) - 1`)
+
+### Floats
+
+Floats are encoded as the tag `0b1_000_0011`, followed by the eight bytes of the float (sign, exponent, fraction in that order). All NaNs must use the bytes `0xffffffffffffffffff` instead (which is one particular, arbitrary NaN representation).
+
+### Chars
+
+Chars are encoded as the tag `0b1_010_11xx`, where the least significant two bits and the following bytes are determined as follows:
+
+- for least significant bits `0b00`, the tag is followed by a singly byte, which encodes the scalar value (less than `2^8`)
+- for least significant bits `0b01`, the tag is followed by two bytes in big-endian order, which encode the scalar value (less than `2^16`)
+- for least significant bits `0b10`, the tag is followed by four bytes in big-endian order, which encode the scalar value (less than `2^32`)
+- for least significant bits `0b11`, the tag is followed by eight bytes in big-endian order, which encode the scalar value (less than `2^64`)
+
+### Utf-8 Strings
+
+Utf-8 strings are encoded as the tag `0b1_011_xxxx`, where the least significant four bits and the following bytes are determined as follows:
+
+- for least significant bits less than `0b1100`, the bits themselves represent the length of the string, the tag is followed by that many bytes of utf-8
+- for least significant bits `0b1100`, the tag is followed by a single byte, which encodes the length of the string, followed by that many bytes of utf-8
+- for least significant bits `0b1101`, the tag is followed by two bytes in big-endian order, which encode the length of the string, followed by that many bytes of utf-8
+- for least significant bits `0b1110`, the tag is followed by four bytes in big-endian order, which encode the length of the string, followed by that many bytes of utf-8
+- for least significant bits `0b1111`, the tag is followed by eight bytes in big-endian order, which encode the length of the string, followed by that many bytes of utf-8
+
+When decoding, reading any invalid utf-8 for the string is an *error*.
+
+### Binary Strings
+
+Binary strings are encoded just like utf-8 strings, with the following differences:
+
+- they use the tags `0b1_100_xxxx`
+- they can contain arbitrary bytes, not just utf-8
+
+### Arrays
+
+Arrays are encoded just like strings, with the following differences:
+
+- they use the tags `0b1_101_xxxx`
+- the length is not given in bytes but in items
+- after the length, the code is followed by the binary encodings of all items in order
+
+### Sets
+
+Sets are encoded just like arrays, with the following differences:
+
+- they use the tags `0b1_110_xxxx`
+- when decoding, reading a duplicate item is an *error*
+  - unlike puny humans hand-writing human-readable codes, machines are expected to not make this mistake
+
+### Maps
+
+Maps are encoded just like arrays, with the following differences:
+
+- the use the tags `0b1_111_xxxx`
+- the length is not given in items but in entries
+- after the length, the code is followed by the encodings of all entries, where an entry is encoded as the binary encoding of its key followed by the binary encoding of its value
+- when decoding, reading a duplicate key is an *error*
+  - unlike puny humans hand-writing human-readable codes, machines are expected to not make this mistake
 
 ## Hybrid Input
 
