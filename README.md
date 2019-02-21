@@ -90,7 +90,7 @@ Each character can either be encoded literally or through an escape sequence. Th
 - `\0` for the character `null` (`0x00`)
 - `\{DIGITS}`, where `DIGITS` is the ASCII decimal representation of any scalar value. `DIGITS` must consist of one to six characters.
 
-When decoding, reading either a literal or an escape sequence that does not correspond to a Unicode scalar value is an *error*. In particular, Unicode code points that are not scalar values are not allowed, even when they form valid surrogate pairs.
+When decoding, reading either a literal or an escape sequence that does not correspond to a Unicode scalar value is an *error*. In particular, Unicode code points that are not scalar values are not allowed, even when they form valid surrogate pairs. Reading a string of more than `(2^64) - 1` scalar values is an *error* as well.
 
 ### Byte Strings
 
