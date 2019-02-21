@@ -210,4 +210,21 @@ The first bit of all valid human-readable encoded values is a zero, the first bi
 
 ## Canonic Encoding
 
-TODO
+A canonic encoding is one where there is a one-to-one correspondence between values and codes. The SSDD canonic encoding is a subset of the binary encoding, obtained through the following restrictions:
+
+- ints, chars and collections must use the shortest possible encodings for their length/size
+- set items must be sorted ascendingly according to the order defined below
+- map entries must be sorted ascendingly by their keys, according to the order defined below
+
+The order on SSDD values used for sorting is defined as follows:
+
+- `null` < booleans < integers < floats < chars < utf-8 strings < byte strings < arrays < sets < maps
+- `false` < `true`
+- integers are sorted by numeric value
+- floats are sorted NaN < negative infinity < "regular floats" < positive infinity, where the "regular floats" are sorted by numeric value, and `-0.0` < `0.0`
+- chars are sorted numerically
+- utf-8 strings are sorted lexicographically
+- byte strings are sorted lexicographically
+- arrays are sorted lexicographically (the items themselves are sorted by the general SSDD value order though, *not* lexicographically)
+- sets are sorted lexicographically (the items are compared smallest to largest, using the general SSDD value order)
+- maps are sorted lexicographically (the entries are compared from smallest key to largest, entry comparision works by first comparing the keys, and if they are equal, comparing the values)
