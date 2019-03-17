@@ -154,12 +154,10 @@ Floats are encoded as the tag `0b1_000_0011`, followed by the eight bytes of the
 
 Chars are encoded as the tag `0b1_010_11xx`, where the least significant two bits and the following bytes are determined as follows:
 
-- for least significant bits `0b00`, the tag is followed by a singly byte, which encodes the scalar value (less than `2^8`)
-- for least significant bits `0b01`, the tag is followed by two bytes in big-endian order, which encode the scalar value (less than `2^16`)
-- for least significant bits `0b10`, the tag is followed by four bytes in big-endian order, which encode the scalar value (less than `2^32`)
-- for least significant bits `0b11`, the tag is followed by eight bytes in big-endian order, which encode the scalar value (less than `2^64`)
-
-TODO no need for 8 bytes. Stay consistent or change the meaning of 0b11 to something more efficient?
+- for least significant bits `0b00`, the tag is followed by a singly byte, which encodes the scalar value in utf-8
+- for least significant bits `0b01`, the tag is followed by two bytes in big-endian order, which encode the scalar value in utf-8
+- for least significant bits `0b10`, the tag is followed by three bytes in big-endian order, which encode the scalar value in utf-8
+- for least significant bits `0b11`, the tag is followed by four bytes in big-endian order, which encode the scalar value in utf-8
 
 ### Utf-8 Strings
 
