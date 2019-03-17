@@ -20,10 +20,10 @@ An SSDD value is one of the following:
 - `int`: An integer between `-(2^63)` and `(2^63) - 1` (inclusive).
 - `float`: An [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754) double precision float, except that there is only one `NaN` value.
 - `char`: A [Unicode scalar value](http://www.unicode.org/glossary/#unicode_scalar_value) (*not* a [Unicode code point](http://www.unicode.org/glossary/#code_point)).
-- `utf8-string`: An ordered sequence of [Unicode scalar values](http://www.unicode.org/glossary/#unicode_scalar_value) whose [utf-8](https://en.wikipedia.org/wiki/UTF-8) encoding takes up no more than `(2^64) - 1` bytes.
-- `byte string`: An ordered sequence of up to `(2^64) - 1` bytes.
-- `array`: An ordered sequence of up to `(2^64) - 1` SSDD values.
-- `set`: An unordered collection of up to `(2^64) - 1` pairwise distinct SSDD values.
+- `utf8-string`: An ordered sequence of [Unicode scalar values](http://www.unicode.org/glossary/#unicode_scalar_value) whose [utf-8](https://en.wikipedia.org/wiki/UTF-8) encoding takes up no more than `(2^63) - 1` bytes.
+- `byte string`: An ordered sequence of up to `(2^63) - 1` bytes.
+- `array`: An ordered sequence of up to `(2^63) - 1` SSDD values.
+- `set`: An unordered collection of up to `(2^63) - 1` pairwise distinct SSDD values.
 - `map`: An unordered collection of pairs (`entries`) of SSDD values, where the first values of all entries are pairwise distinct. The first value of an entry is called a `key`, the second value called a `value`.
 
 The choice of values a self-describing format provides is to some degree arbitrary. For SSDD, decisions between different approaches have often been decided based on machine-friendlyness. Fixed-width integers are much easier to handle than arbitrary precision integers. Floats are easier than true rationals. Maximum collection and string sizes enable implementations to precisely follow the spec rather than introducing arbitrary limits that would inevitably differ between distinct implementations.
@@ -79,9 +79,9 @@ When decoding, reading either a literal or an escape sequence that does not corr
 
 ### Utf-8 Strings
 
-A string is encoded as a `"` (`0x22`), followed by up to `(2^64) - 1` characters (scalar values), followed by another `"` (`0x22`).
+A string is encoded as a `"` (`0x22`), followed by up to `(2^63) - 1` bytes worth of character encodings (see next paragraph), followed by another `"` (`0x22`).
 
-Each character can either be encoded literally or through an escape sequence. The literal encoding cn be used for all scalar values other than `"` (`0x22`) and `\` (`0x5c`) and consists of the utf-8 encoding of the scalar value. Alternatively, any of the following escape sequences can be used:
+Each character can either be encoded literally or through an escape sequence. The literal encoding can be used for all scalar values other than `"` (`0x22`) and `\` (`0x5c`) and consists of the utf-8 encoding of the scalar value. Alternatively, any of the following escape sequences can be used:
 
 - `\"` for the character `"` (`0x22`)
 - `\\` for the character `\` (`0x5c`)
@@ -90,25 +90,25 @@ Each character can either be encoded literally or through an escape sequence. Th
 - `\0` for the character `null` (`0x00`)
 - `\{DIGITS}`, where `DIGITS` is the ASCII decimal representation of any scalar value. `DIGITS` must consist of one to six characters.
 
-When decoding, reading either a literal or an escape sequence that does not correspond to a Unicode scalar value is an *error*. In particular, Unicode code points that are not scalar values are not allowed, even when they form valid surrogate pairs. Reading a string of more than `(2^64) - 1` scalar values is an *error* as well.
+When decoding, reading either a literal or an escape sequence that does not correspond to a Unicode scalar value is an *error*. In particular, Unicode code points that are not scalar values are not allowed, even when they form valid surrogate pairs. Reading a string of more than `(2^63) - 1` scalar values is an *error* as well.
 
 ### Byte Strings
 
 A binary string is encoded as a comma-separated (`,`, `0x2c`) list of the bytes, enclosed between `b[` ([`0x62`, `0x5b`]) and `]` (`0x5d`). The bytes are encoded just like `ints`. An optional trailing comma before the closing bracket is allowed. Any amount of whitespace can be placed between brackets, contained values, and commas.
 
-When decoding, reading a byte string of more than `(2^64) - 1` contained byte encodings is an *error*.
+When decoding, reading a byte string of more than `(2^63) - 1` contained byte encodings is an *error*.
 
 ### Arrays
 
 An array is encoded as a comma-separated (`,`, `0x2c`) list of the encodings of the contained values, enclosed between brackets `[` (`0x5b`) and `]` (`0x5d`). An optional trailing comma before the closing bracket is allowed. Any amount of whitespace can be placed between brackets, contained values, and commas.
 
-When decoding, reading an array of more than `(2^64) - 1` contained values is an *error*.
+When decoding, reading an array of more than `(2^63) - 1` contained values is an *error*.
 
 ### Sets
 
 A set is encoded as a comma-separated (`,`, `0x2c`) list of the encodings of the contained values, enclosed between `@{` ([`0x40`, `0x7b`]) and `}` (`0x7d`). An optional trailing comma before the closing brace is allowed. Any amount of whitespace can be placed between braces, contained values, and commas.
 
-When decoding, duplicate values are allowed and are simply discarded (the logical model does *not* allow multisets). Reading a set of more than `(2^64) - 1` distinct contained values is an *error*.
+When decoding, duplicate values are allowed and are simply discarded (the logical model does *not* allow multisets). Reading a set of more than `(2^63) - 1` distinct contained values is an *error*.
 
 ### Maps
 
@@ -116,7 +116,7 @@ A map is encoded as a comma-separated (`,`, `0x2c`) list of the contained pairs 
 
 An entry is encoded as the encoding of the key, followed by any amount of whitespace, followed by a `:` (`0x3a`) followed by any amount of whitespace, followed by the encoding of the value.
 
-When decoding multiple entries with identical keys, the later entry replaces the previous entry in the map. Reading a map of more than `(2^64) - 1` contained entries with distinct keys is an *error*.
+When decoding multiple entries with identical keys, the later entry replaces the previous entry in the map. Reading a map of more than `(2^63) - 1` contained entries with distinct keys is an *error*.
 
 ## Binary Encoding
 
@@ -159,6 +159,8 @@ Chars are encoded as the tag `0b1_010_11xx`, where the least significant two bit
 - for least significant bits `0b10`, the tag is followed by four bytes in big-endian order, which encode the scalar value (less than `2^32`)
 - for least significant bits `0b11`, the tag is followed by eight bytes in big-endian order, which encode the scalar value (less than `2^64`)
 
+TODO no need for 8 bytes. Stay consistent or change the meaning of 0b11 to something more efficient?
+
 ### Utf-8 Strings
 
 Utf-8 strings are encoded as the tag `0b1_011_xxxx`, where the least significant four bits and the following bytes are determined as follows:
@@ -169,7 +171,7 @@ Utf-8 strings are encoded as the tag `0b1_011_xxxx`, where the least significant
 - for least significant bits `0b1110`, the tag is followed by four bytes in big-endian order, which encode the length of the string, followed by that many bytes of utf-8
 - for least significant bits `0b1111`, the tag is followed by eight bytes in big-endian order, which encode the length of the string, followed by that many bytes of utf-8
 
-When decoding, reading any invalid utf-8 for the string is an *error*.
+When decoding, reading any invalid utf-8 for the string is an *error*. Reading a length of more than `2^63 - 1` is an error as well.
 
 ### Binary Strings
 
