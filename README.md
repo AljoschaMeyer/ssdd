@@ -50,7 +50,7 @@ A negative int is encoded as a `-` (`0x2d`) directly followed by the encoding of
 
 A positive int can be encoded in one of two ways: Either as a sequence of ASCII decimal digits (`0x30` to `0x39`), or as the utf-8 string `0x` (`[0x30, 0x78]`) followed by a sequence of ASCII hexadecimal digits (`0x30` to `0x39`, `0x41` to `0x46`, and `0x61` to `0x66`).
 
-When decoding, reading an integer outside the allowed range (between `-(2^63)` and `(2^63) - 1` inclusive) is an *error*. Those are not valid human-readbly encoded ssdd values.
+When decoding, reading an integer outside the allowed range (between `-(2^63)` and `(2^63) - 1` inclusive) is an *error*. Those are not valid human-readably encoded ssdd values.
 
 ### Floats
 
