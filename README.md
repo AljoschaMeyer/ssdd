@@ -1,3 +1,5 @@
+**status: deprecated in favor of [vv](https://github.com/AljoschaMeyer/valuable-value)**
+
 # SSDD
 
 > Some Self-Describing Data
